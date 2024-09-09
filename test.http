@@ -1,0 +1,38 @@
+GET http://127.0.0.1:8080/oauth2/authorization/service-client
+
+###
+
+POST http://127.0.0.1:8091/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user&password=1234
+
+###
+POST http://127.0.0.1:8091
+Cookie: JSESSIONID=AB0CF393836C94F629B8D97DED9F6C1E;
+
+###
+
+POST /login HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: es-ES,es;q=0.9
+Cache-Control: max-age=0
+Connection: keep-alive
+Content-Length: 27
+Content-Type: application/x-www-form-urlencoded
+DNT: 1
+Host: 127.0.0.1:8091
+Origin: http://127.0.0.1:8091
+Referer: http://127.0.0.1:8091/login
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+
+username=user&password=1234
