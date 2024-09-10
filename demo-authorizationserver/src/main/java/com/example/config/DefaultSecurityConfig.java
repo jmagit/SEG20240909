@@ -15,8 +15,10 @@
  */
 package com.example.config;
 
-import com.example.federation.FederatedIdentityAuthenticationSuccessHandler;
-
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
+import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
+import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,12 +26,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+
+import com.example.federation.FederatedIdentityAuthenticationSuccessHandler;
 
 /**
  * @author Joe Grandja
@@ -46,7 +49,7 @@ public class DefaultSecurityConfig {
 		http
 			.authorizeHttpRequests(authorize ->
 				authorize
-					.requestMatchers("/assets/**", "/login").permitAll()
+					.requestMatchers("/assets/**", "/login", "/actuator/**").permitAll()
 					.anyRequest().authenticated()
 			)
 			.formLogin(formLogin ->
@@ -54,7 +57,7 @@ public class DefaultSecurityConfig {
 					.loginPage("/login")
 			)
 			.oauth2Login(oauth2Login ->
-				oauth2Login
+				oauth2Login.loginProcessingUrl(null)
 					.loginPage("/login")
 					.successHandler(authenticationSuccessHandler())
 			);
@@ -70,12 +73,12 @@ public class DefaultSecurityConfig {
 	// @formatter:off
 	@Bean
 	public UserDetailsService users() {
-		UserDetails user = User.withDefaultPasswordEncoder()
-				.username("user1")
-				.password("password")
-				.roles("USER")
-				.build();
-		return new InMemoryUserDetailsManager(user);
+		return new InMemoryUserDetailsManager(
+				User.withUsername("user1").password("{noop}1").roles("USER").build(),
+				User.withUsername("adm@example.com").password("{noop}P@$$w0rd").roles("USUARIOS", "ADMINISTRADORES").build(),
+				User.withUsername("emp@example.com").password("{noop}P@$$w0rd").roles("USUARIOS", "EMPLEADOS").build(),
+				User.withUsername("usr@example.com").password("{noop}P@$$w0rd").roles("USUARIOS").build()
+			);
 	}
 	// @formatter:on
 
@@ -88,5 +91,15 @@ public class DefaultSecurityConfig {
 	public HttpSessionEventPublisher httpSessionEventPublisher() {
 		return new HttpSessionEventPublisher();
 	}
+	
+    @Bean
+    HttpExchangeRepository httpTraceRepository() {
+        return new InMemoryHttpExchangeRepository();
+    }
+
+    @Bean
+    AuditEventRepository auditEventRepository() {
+        return new InMemoryAuditEventRepository();
+    }
 
 }

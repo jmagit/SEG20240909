@@ -48,3 +48,26 @@ logging:
     org.springframework.web: INFO
     org.springframework.security: INFO
     org.springframework.security.oauth2: INFO
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+      path-mapping:
+        httpexchanges: httptrace
+    health:
+      sensitive: '*'
+  endpoint:
+    health:
+      show-details: always
+  security:
+    enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  auditevents:
+    enabled: true
