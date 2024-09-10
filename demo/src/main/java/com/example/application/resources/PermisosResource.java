@@ -27,9 +27,4 @@ public class PermisosResource {
 	public String conEscritura() {
 		return "solo con escritura";
 	}
-	
-	@GetMapping("/authorized")
-	public Map<String, String> authorized(@RequestParam String code) {
-		return Map.of("code", code);
-	}
 }

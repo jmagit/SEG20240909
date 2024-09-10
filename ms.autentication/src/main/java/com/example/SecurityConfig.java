@@ -83,13 +83,14 @@ public class SecurityConfig {
 
 	@Bean 
 	public UserDetailsService userDetailsService() {
-		UserDetails userDetails = User.builder()
-				.username("user")
-				.password("{noop}1234")
-				.roles("USER")
-				.build();
-
-		return new InMemoryUserDetailsManager(userDetails);
+//		UserDetails userDetails = User.builder()
+//				.username("user").password("{noop}1234").roles("USER")
+//				.build();
+//		return new InMemoryUserDetailsManager(userDetails);
+		return new InMemoryUserDetailsManager(
+					User.builder().username("user").password("{noop}1234").roles("USER").build(),
+					User.builder().username("adm@example.com").password("{noop}P@$$w0rd").roles("USER").build()
+				);
 	}
 
 	@Bean 
