@@ -45,29 +45,29 @@ public class UserResource {
 //			    ).build();
 	}
 	
-//	@GetMapping("/authorized")
-//	public Map<String, String> authorized(@RequestParam String code) {
-//		return Map.of("code", code);
-//	}
-	
 	@GetMapping("/authorized")
-	public String authorized(@RequestParam String code) {
-		return code;
-//		RestClient restClient = RestClient.builder()
-//		    .baseUrl("http://127.0.0.1:8091")
-//		    .defaultHeaders(headers -> headers.setBasicAuth("service-client", "12345"))
-//		    .requestFactory(new SimpleClientHttpRequestFactory())
-//		    .build();
-//		var res = restClient.post().uri("http://127.0.0.1:8091/token").contentType(MediaType.APPLICATION_FORM_URLENCODED)
-//				.body("grant_type=authorization_code&redirect_uri=http://127.0.0.1:8080/authorized&code=" + code)
-//				.retrieve().toBodilessEntity(); //.body(String.class);
-//		System.out.println(res);
-//		if(res.getStatusCode() == HttpStatus.FOUND) {
-//			res = restClient.post().uri(res.getHeaders().getLocation()).contentType(MediaType.APPLICATION_FORM_URLENCODED)
-//					.body("grant_type=authorization_code&redirect_uri=http://127.0.0.1:8080/authorized&code=" + code)
-//					.retrieve().toBodilessEntity(); //.body(String.class);
-//		}
-//		return res.toString();
+	public Map<String, String> authorized(@RequestParam String code) {
+		return Map.of("code", code);
 	}
+	
+//	@GetMapping("/authorized")
+//	public String authorized(@RequestParam String code) {
+//		return code;
+////		RestClient restClient = RestClient.builder()
+////		    .baseUrl("http://127.0.0.1:8091")
+////		    .defaultHeaders(headers -> headers.setBasicAuth("service-client", "12345"))
+////		    .requestFactory(new SimpleClientHttpRequestFactory())
+////		    .build();
+////		var res = restClient.post().uri("http://127.0.0.1:8091/token").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+////				.body("grant_type=authorization_code&redirect_uri=http://127.0.0.1:8080/authorized&code=" + code)
+////				.retrieve().toBodilessEntity(); //.body(String.class);
+////		System.out.println(res);
+////		if(res.getStatusCode() == HttpStatus.FOUND) {
+////			res = restClient.post().uri(res.getHeaders().getLocation()).contentType(MediaType.APPLICATION_FORM_URLENCODED)
+////					.body("grant_type=authorization_code&redirect_uri=http://127.0.0.1:8080/authorized&code=" + code)
+////					.retrieve().toBodilessEntity(); //.body(String.class);
+////		}
+////		return res.toString();
+//	}
 
 }

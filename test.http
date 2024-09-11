@@ -1,4 +1,7 @@
-GET http://127.0.0.1:8080/oauth2/authorization/service-client
+POST http://127.0.0.1:8080/oauth2/authorization/service-client
+
+###
+POST http://127.0.0.1:8091/oauth2/authorize?response_type=code&client_id=service-client&scope=openid%20profile%20read%20write&state=cJFqzxeFrJzzBvM7CYWGpaEotkLdprhSesHe7PkaZjo%3D&redirect_uri=http://127.0.0.1:8080/authorized&nonce=yRSmCkcnY_r9W8of0kOiHOX32x9J1RVYGrhf3QpUyK4
 
 ###
 
@@ -13,26 +16,47 @@ Cookie: JSESSIONID=AB0CF393836C94F629B8D97DED9F6C1E;
 
 ###
 
-POST /login HTTP/1.1
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: es-ES,es;q=0.9
-Cache-Control: max-age=0
-Connection: keep-alive
-Content-Length: 27
-Content-Type: application/x-www-form-urlencoded
-DNT: 1
-Host: 127.0.0.1:8091
-Origin: http://127.0.0.1:8091
-Referer: http://127.0.0.1:8091/login
-Sec-Fetch-Dest: document
-Sec-Fetch-Mode: navigate
-Sec-Fetch-Site: same-origin
-Sec-Fetch-User: ?1
-Upgrade-Insecure-Requests: 1
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36
-sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"
-sec-ch-ua-mobile: ?0
-sec-ch-ua-platform: "Windows"
+get https://localhost:8443/messages
 
-username=user&password=1234
+###
+# @name session
+POST http://127.0.0.1:9000/oauth2/authorization/webapp
+
+###
+
+POST http://127.0.0.1:9000/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user1&password=1
+
+###
+GET http://127.0.0.1:9000/.well-known/oauth-authorization-server
+
+
+###
+POST http://127.0.0.1:8091/oauth2/authorization/public-client
+
+###
+# @name session
+POST http://127.0.0.1:8091/oauth2/authorization/service-client
+
+###
+@JSESSIONID = {{session.response.headers.Set-Cookie.JSESSIONID}}
+
+POST http://127.0.0.1:8091/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user1&password=1
+
+###
+POST http://127.0.0.1:8091/oauth2/authorization/public-client
+
+###
+POST http://127.0.0.1:8091/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user1&password=1
+###
+
+post http://127.0.0.1:8091/oauth2/authorization/public-client?continue
+

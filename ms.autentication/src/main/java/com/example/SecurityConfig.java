@@ -1,85 +1,163 @@
 package com.example;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-	@Bean 
-	@Order(1)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-			throws Exception {
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
-		http
-			// Redirect to the login page when not authenticated from the
-			// authorization endpoint
+    @Bean
+    @Order(1)
+    SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+        	.authorizationEndpoint(config -> config.authorizationResponseHandler((req, res, auth) -> { //actions when authentication succeeds
+                res.resetBuffer();
+                res.setStatus(HttpStatus.OK.value());
+                res.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+                // fetch saved url (visited before being redirected to login page) and return it in response body.
+                var savedReq = new HttpSessionRequestCache().getRequest(req, res);
+                res.getWriter()
+                    .append("{\"redirectUrl\": \"")
+                    .append(savedReq == null ? "" : savedReq.getRedirectUrl())
+                    .append("\"}");
+                res.flushBuffer();
+            }))
+            .oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+        http
+            .cors(Customizer.withDefaults())
 			.exceptionHandling((exceptions) -> exceptions
-				.defaultAuthenticationEntryPointFor(
-					new LoginUrlAuthenticationEntryPoint("/login"),
-					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+					.defaultAuthenticationEntryPointFor(
+						new LoginUrlAuthenticationEntryPoint("/login"),
+						new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+					)
 				)
-			)
 			// Accept access tokens for User Info and/or Client Registration
 			.oauth2ResourceServer((resourceServer) -> resourceServer
 				.jwt(Customizer.withDefaults()));
 
-		return http.build();
-	}
+        return http.build();
+    }
 
-	@Bean 
-	@Order(2)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
-			throws Exception {
-		http
-			.authorizeHttpRequests((authorize) -> authorize
-				.anyRequest().authenticated()
-			)
-			.csrf(AbstractHttpConfigurer::disable)
-			// Form login handles the redirect to the login page from the
-			// authorization server filter chain
-			.formLogin(Customizer.withDefaults());
+    @Bean
+    @Order(2)
+    SecurityFilterChain authenticationSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/login", "/logout") //limit filter chain to those endpoints only
+            .cors(Customizer.withDefaults()) //apply default cors policy
+            .csrf((csrf) -> csrf.disable()) //disable csrf to just keep it simple, not safe for prod though
+            .formLogin(form -> form
+                .loginPage("http://localhost:9090/login") //url to login page
+                .loginProcessingUrl("/login") //endpoint where POST login requests will be sent
+                .successHandler((req, res, auth) -> { //actions when authentication succeeds
+                    res.resetBuffer();
+                    res.setStatus(HttpStatus.OK.value());
+                    res.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-		return http.build();
-	}
+                    // fetch saved url (visited before being redirected to login page) and return it in response body.
+                    var savedReq = new HttpSessionRequestCache().getRequest(req, res);
+                    res.getWriter()
+                        .append("{\"redirectUrl\": \"")
+                        .append(savedReq == null ? "" : savedReq.getRedirectUrl())
+                        .append("\"}");
+                    res.flushBuffer();
+                })
+                .failureHandler( //and when it fails
+                    (req, res, ex) -> res.setStatus(HttpStatus.UNAUTHORIZED.value())
+                )
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("http://localhost:9090/login?logout") //target page after logout
+            )
+            // actions when any exception arises
+            .exceptionHandling(handler -> handler
+                .authenticationEntryPoint(
+                    new HttpStatusEntryPoint(HttpStatus.FORBIDDEN)
+                )
+            )
+            // secure other potential endpoints
+            .authorizeHttpRequests(authorize -> authorize
+                .anyRequest().authenticated()
+            );
+
+        return http.build();
+    }
+    
+    @Bean
+    @Order(3)
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests((authorize) -> authorize
+//            	.requestMatchers("/oauth2/authorization/**").permitAll()
+                .anyRequest().authenticated()
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    RegisteredClientRepository registeredClientRepository() {
+        RegisteredClient publicClient = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("webapp")
+            .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("http://localhost:9090/auth")
+            .scope(OidcScopes.OPENID)
+            .scope(OidcScopes.PROFILE)
+            .clientSettings(ClientSettings.builder()
+                .requireAuthorizationConsent(false)
+                .requireProofKey(true)
+                .build()
+            )
+            .build();
+
+        return new InMemoryRegisteredClientRepository(publicClient);
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        config.addAllowedOrigin("http://localhost:9090");
+        config.setAllowCredentials(true);
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 
 	@Bean 
 	public UserDetailsService userDetailsService() {
@@ -89,63 +167,6 @@ public class SecurityConfig {
 				User.withUsername("emp@example.com").password("{noop}P@$$w0rd").roles("USUARIOS", "EMPLEADOS").build(),
 				User.withUsername("usr@example.com").password("{noop}P@$$w0rd").roles("USUARIOS").build()
 			);
-	}
-
-	@Bean 
-	public RegisteredClientRepository registeredClientRepository() {
-		RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("service-client")
-				.clientSecret("{noop}12345")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/service-client")
-				.redirectUri("http://127.0.0.1:8080/authorized")
-				.postLogoutRedirectUri("http://127.0.0.1:8080/logout")
-				.scope("read")
-				.scope("write")
-				.scope(OidcScopes.OPENID)
-				.scope(OidcScopes.PROFILE)
-				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
-				.build();
-
-		return new InMemoryRegisteredClientRepository(oidcClient);
-	}
-
-	@Bean 
-	public JWKSource<SecurityContext> jwkSource() {
-		KeyPair keyPair = generateRsaKey();
-		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-		RSAKey rsaKey = new RSAKey.Builder(publicKey)
-				.privateKey(privateKey)
-				.keyID(UUID.randomUUID().toString())
-				.build();
-		JWKSet jwkSet = new JWKSet(rsaKey);
-		return new ImmutableJWKSet<>(jwkSet);
-	}
-
-	private static KeyPair generateRsaKey() { 
-		KeyPair keyPair;
-		try {
-			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-			keyPairGenerator.initialize(2048);
-			keyPair = keyPairGenerator.generateKeyPair();
-		}
-		catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-		return keyPair;
-	}
-
-	@Bean 
-	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-	}
-
-	@Bean 
-	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().build();
 	}
 
 }

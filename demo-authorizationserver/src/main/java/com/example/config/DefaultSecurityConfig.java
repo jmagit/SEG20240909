@@ -57,7 +57,7 @@ public class DefaultSecurityConfig {
 					.loginPage("/login")
 			)
 			.oauth2Login(oauth2Login ->
-				oauth2Login.loginProcessingUrl(null)
+				oauth2Login
 					.loginPage("/login")
 					.successHandler(authenticationSuccessHandler())
 			);
