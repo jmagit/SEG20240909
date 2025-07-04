@@ -1,0 +1,33 @@
+@AuthenticationServer_HostAddress = http://localhost:5039
+@usr = "emp@example.com"
+
+###
+
+@name = getToken
+
+POST {{AuthenticationServer_HostAddress}}/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{ "username": {{usr}}, "password": "P@$$w0rd" }
+
+###
+
+POST {{AuthenticationServer_HostAddress}}/auth/refresh
+Accept: application/json
+Content-Type: application/json
+
+{ "token": {{response.body.$.refresh}} }
+
+
+###
+
+GET {{AuthenticationServer_HostAddress}}/auth/publickey
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbUBleGFtcGxlLmNvbSIsInJvbGVzIjpbIlVzdWFyaW9zIiwiQWRtaW5pc3RyYWRvcmVzIl0sIm5iZiI6MTc1MDg4NjA3NywiZXhwIjoxNzUwODg2Mzc3LCJpYXQiOjE3NTA4ODYwNzcsImlzcyI6Ik1pY3Jvc2VydmljaW9zSldUIiwiYXVkIjoiYXV0aG9yaXphdGlvbiJ9.WHkZoGMrbL105rSxq7RKrRJhM2XVQWadTG5GJMV_37oHc8TigOjgl4fA66tLBS8dZ5YorAPNare9GewwYmRRKRF4TuEHzgGrmmOrviZ_pyIyHoZ6ciJiDgNahNwgwkQGmT4XjEkf2n3HLgmyKNwFtv1ntdWVPywmhVG2GTyAKyDSj4-1gauh2OgF0kx3SVhiMQmUh5ORdLZtsvSUOSZg8KO5wXVv_t0l5MtQZRD-NRASAhVq2K3psTLrxymeAE2PlFe9Ag9rGzM9odNZujsp2WwQqSqqte-ubXj417Rj7CNHmNRGh9u9wjF6vtleDmZEeT1DfKd-y95YeZ29a1gkIg
+
+
+
+###
+
+GET http://localhost:5069/api/Categorias/1
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbUBleGFtcGxlLmNvbSIsInJvbGVzIjpbIlVzdWFyaW9zIiwiQWRtaW5pc3RyYWRvcmVzIl0sIm5iZiI6MTc1MDg4NjA3NywiZXhwIjoxNzUwODg2Mzc3LCJpYXQiOjE3NTA4ODYwNzcsImlzcyI6Ik1pY3Jvc2VydmljaW9zSldUIiwiYXVkIjoiYXV0aG9yaXphdGlvbiJ9.WHkZoGMrbL105rSxq7RKrRJhM2XVQWadTG5GJMV_37oHc8TigOjgl4fA66tLBS8dZ5YorAPNare9GewwYmRRKRF4TuEHzgGrmmOrviZ_pyIyHoZ6ciJiDgNahNwgwkQGmT4XjEkf2n3HLgmyKNwFtv1ntdWVPywmhVG2GTyAKyDSj4-1gauh2OgF0kx3SVhiMQmUh5ORdLZtsvSUOSZg8KO5wXVv_t0l5MtQZRD-NRASAhVq2K3psTLrxymeAE2PlFe9Ag9rGzM9odNZujsp2WwQqSqqte-ubXj417Rj7CNHmNRGh9u9wjF6vtleDmZEeT1DfKd-y95YeZ29a1gkIg
